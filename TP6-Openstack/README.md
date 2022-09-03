@@ -1,0 +1,1 @@
+# TP06 : Mise en place d'un cloud virtuel avec Openstack
