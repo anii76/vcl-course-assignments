@@ -1,0 +1,49 @@
+1/En utilisant qemu-kvm:
+systemctl start libvirtd
+systemctl enable libvirtd
+qemu-img create -f qcow2 centos7.qcow2 10G
+qemu-kvm -name VM1 \
+-cdrom /var/lib/libvirt/boot/CentOS-7-x86_64-Minimal-1810.iso \
+-m 1570 \
+-cpu kvm64  \
+-drive file=/nas/vm/centos7/centos7.qcow2 \
+-boot d 
+
+2/En utilisant virt-install
+systemctl start libvirtd
+systemctl enable libvirtd
+qemu-img create -f qcow2 centos7.qcow2 10G
+virt-install --virt-type=kvm \
+--name VM2 \
+--ram=1548 \
+--vcpus=1 \
+--os-variant=centos7.0 \
+--cdrom=/var/lib/libvirt/boot/CentOS-7-x86_64-Minimal-1810.iso \
+--network=bridge=kvmbr0,model=virtio \
+--disk path=/nas/vm/centos7-1/centos7.qcow2 \
+--graphics vnc
+
+3/virsh
+#creation de la VM1 a partir d'un fichier descriptive xml
+virt-xml-validate VM1.xml
+virsh create VM1.xml
+#commandes de configuration et test
+virsh list --all
+virsh --connect qemu:///system
+virsh dumpxml VM2
+virsh net-list
+virsh#start VM2
+virsh#shutdown VM2
+
+
+
+4/Difference entre creation d'une VM avec qemu-kvm et virt-install
+* qemu-kvm:
+le process qemu-kvm qui crée la VM1 est lancé par l'utilisateur root. (en utilisant ps -aux or top or lsof -iP | grep LISTEN)
+la VM créer n'apparait pas dans virsh ( car virsh utlise l'API libvirt ou chaque machine virtuelle est décrit par un fichier xml mais pendant la creation de la VM. qemu-kvm ne creer pas ce fichier automatiquement)
+* virt-install:
+le process qui crée la VM2 est lancé par le deamon de l'emulateur qemu.
+facile a gérer et créer les VM.
+
+une VM n'apparait pas dans libvirt dans le cas ou elle n'a pas un fichier xml descriptive
+(qui se situe dans /etc/lib/libvirt/qemu/VM.xml)
